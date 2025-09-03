@@ -1,0 +1,94 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body, html {
+  height: 100%;
+  width: 100%;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Left panel - ছোট করে */
+.left-panel {
+  flex: 2;   /* আগে ছিল 3 */
+  background-image: url('img/home (3).jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Right panel - বড় করে */
+.right-panel {
+  flex: 3;   /* আগে ছিল 2 */
+  background: linear-gradient(135deg, #f6f8fc, #e2ecf9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px;
+}
+
+
+.content {
+  width: 100%;
+  max-width: 400px;
+}
+
+.brand {
+  font-size: 32px;
+  font-weight: bold;
+  color: #e23a02fe;
+  margin-bottom: 20px;
+}
+
+.login-title {
+  font-size: 22px;
+  margin-bottom: 30px;
+  color: #1a1a1a;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-form input {
+  padding: 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+}
+
+.login-form button {
+  padding: 14px;
+  background-color: #fc6f23;
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-form button:hover {
+  background-color: #e23a02fe;
+}
+
+.register-text {
+  font-size: 14px;
+  margin-top: 10px;
+  color: #333;
+}
+
+.register-text a {
+  color: #e23a02fe;
+  text-decoration: none;
+  font-weight: bold;
+}

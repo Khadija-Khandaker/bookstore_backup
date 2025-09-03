@@ -1,0 +1,143 @@
+<?php
+include 'config.php';
+session_start();
+
+$user_id = $_SESSION['user_id'];
+
+if(!isset($user_id)){
+   header('location:login.php');
+}
+
+// cart add logic
+if(isset($_POST['add_to_cart'])){
+   $product_name = $_POST['product_name'];
+   $product_price = $_POST['product_price'];
+   $product_image = $_POST['product_image'];
+   $product_quantity = $_POST['product_quantity'];
+
+   $check_cart_numbers = mysqli_query($conn, "SELECT * FROM cart WHERE name = '$product_name' AND user_id = '$user_id'") or die('query failed');
+
+   if(mysqli_num_rows($check_cart_numbers) > 0){
+      $message[] = 'already added to cart!';
+   }else{
+      mysqli_query($conn, "INSERT INTO cart(user_id, name, price, quantity, image) VALUES('$user_id', '$product_name', '$product_price', '$product_quantity', '$product_image')") or die('query failed');
+      $message[] = 'product added to cart!';
+   }
+}
+
+// =================== API থেকে ডাটা আনা ===================
+// Pagination এর জন্য
+$limit = 10; // প্রতি পেজে 10 বই
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$startIndex = ($page - 1) * $limit;
+
+$api_books = [];
+$api_url = "https://www.googleapis.com/books/v1/volumes?q=book&startIndex={$startIndex}&maxResults={$limit}";
+
+$response = file_get_contents($api_url);
+$total_items = 0;
+if($response){
+   $data = json_decode($response, true);
+   $total_items = $data['totalItems'] ?? 0;
+
+   if(isset($data['items'])){
+      foreach($data['items'] as $item){
+         $api_books[] = [
+            'id' => $item['id'] ?? '', // নতুন যুক্ত
+            'name' => $item['volumeInfo']['title'] ?? 'No Title',
+            'author' => isset($item['volumeInfo']['authors'][0]) ? $item['volumeInfo']['authors'][0] : 'Unknown',
+            'price' => rand(10,50), // demo price
+            'image' => $item['volumeInfo']['imageLinks']['thumbnail'] ?? 'no-image.png'
+         ];
+      }
+   }
+}
+
+// মোট কয়টা পেজ হবে
+$total_pages = ceil($total_items / $limit);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>shop</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+   <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<?php include 'header.php'; ?>
+
+<div class="heading">
+   <h3>our shop</h3>
+</div>
+
+<section class="products">
+   <h1 class="title">All Books</h1>
+   <div class="box-container">
+
+      <!-- Database থেকে বই -->
+      <?php  
+         $select_products = mysqli_query($conn, "SELECT * FROM products") or die('query failed');
+         if(mysqli_num_rows($select_products) > 0){
+            while($fetch_products = mysqli_fetch_assoc($select_products)){
+      ?>
+      <form action="" method="post" class="box">
+         <img class="image" src="uploaded_img/<?php echo $fetch_products['image']; ?>" alt="">
+         <div class="name"><?php echo $fetch_products['name']; ?></div>
+         <div class="price"><?php echo $fetch_products['price']; ?>/-</div>
+         <input type="number" min="0" name="product_quantity" value="0" class="qty">
+         <input type="hidden" name="product_name" value="<?php echo $fetch_products['name']; ?>">
+         <input type="hidden" name="product_price" value="<?php echo $fetch_products['price']; ?>">
+         <input type="hidden" name="product_image" value="<?php echo $fetch_products['image']; ?>">
+         <input type="submit" value="add to cart" name="add_to_cart" class="btn">
+         <a href="book-details.php?id=<?php echo $fetch_products['id']; ?>" class="btn">View Details</a>
+      </form>
+      <?php
+            }
+         }
+      ?>
+
+      <!-- API থেকে বই -->
+      <?php
+      if(!empty($api_books)){
+         foreach($api_books as $book){
+      ?>
+      <form action="" method="post" class="box">
+         <img class="image" src="<?php echo $book['image']; ?>" alt="">
+         <div class="name"><?php echo $book['name']; ?></div>
+         <div class="author">By: <?php echo $book['author']; ?></div>
+         <div class="price"><?php echo $book['price']; ?>/-</div>
+         <input type="number" min="0" name="product_quantity" value="0" class="qty">
+         <input type="hidden" name="product_name" value="<?php echo $book['name']; ?>">
+         <input type="hidden" name="product_price" value="<?php echo $book['price']; ?>">
+         <input type="hidden" name="product_image" value="<?php echo $book['image']; ?>">
+         <input type="submit" value="add to cart" name="add_to_cart" class="btn">
+         <a href="book-details.php?id=<?php echo $book['id']; ?>&source=api" class="btn">View Details</a>
+      </form>
+
+      <?php
+         }
+      }else{
+         echo "<p class='empty'>No books found from API!</p>";
+      }
+      ?>
+   </div>
+
+   <!-- Pagination -->
+   <div class="pagination">
+      <?php if($page > 1): ?>
+         <a href="shop.php?page=<?php echo $page-1; ?>" class="btn">Prev</a>
+      <?php endif; ?>
+
+      <?php if($page < $total_pages): ?>
+         <a href="shop.php?page=<?php echo $page+1; ?>" class="btn">Next</a>
+      <?php endif; ?>
+   </div>
+</section>
+
+<?php include 'footer.php'; ?>
+<script src="js/script.js"></script>
+</body>
+</html>
